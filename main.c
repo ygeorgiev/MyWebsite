@@ -9,9 +9,17 @@
 
 #include <config.h>
 #include "utils.h"
+#include "web.h"
 
 GMainLoop *loop;
 SoupServer *soupServer;
+
+void initSoup()
+{
+    //Add all serverhandlers and auth filters to soupServer
+    web_init_test(soupServer);
+
+}
 
 
 void signal_handle(int signal_type)
@@ -86,6 +94,10 @@ int main(int argc, char **argv)
     soupServer = soup_server_new(SOUP_SERVER_PORT, opt_port, NULL);
     soup_server_run_async(soupServer);
     DEBUG("SOUP Server initialized");
+
+    DEBUG("Initializing paths and modules in the SOUP Server...");
+    initSoup();
+    DEBUG("SOUP Server ready for use");
 
     DEBUG("Initializing main loop...");
     loop = g_main_loop_new(NULL, FALSE);

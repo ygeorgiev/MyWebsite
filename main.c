@@ -96,8 +96,10 @@ int main(int argc, char **argv)
     g_value_init(&server_header, G_TYPE_STRING);
     g_value_set_static_string(&server_header, SERVER_HEADER);
     g_object_set_property((GObject*)soupServer, "server-header", &server_header);
+    gint port;
+    g_object_get(soupServer, "port", &port, NULL);
     soup_server_run_async(soupServer);
-    DEBUG("SOUP Server initialized");
+    DEBUG("SOUP Server initialized using port: %i", port);
 
     DEBUG("Initializing paths and modules in the SOUP Server...");
     initSoup();

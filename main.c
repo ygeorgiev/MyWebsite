@@ -11,6 +11,7 @@
 #include "utils.h"
 
 GMainLoop *loop;
+SoupServer *soupServer;
 
 
 void signal_handle(int signal_type)
@@ -45,12 +46,14 @@ int main(int argc, char **argv)
 {
     g_type_init();
 
+    int opt_port = 8080;
     gboolean opt_debug = FALSE;
     gboolean opt_version = FALSE;
     GOptionContext *opt_context;
     GError *error;
     GOptionEntry opt_entries[] = 
         {
+            {"port", 'p', 0, G_OPTION_ARG_INT, &opt_port, "Set port (default: 8080)", NULL},
             {"version", 'v', 0, G_OPTION_ARG_NONE, &opt_version, "Show version", NULL},
             {"debug", 'd', 0, G_OPTION_ARG_NONE, &opt_debug, "Enable debugging", NULL},
             {NULL},
@@ -79,11 +82,20 @@ int main(int argc, char **argv)
     signal(SIGINT, signal_int);
     DEBUG("Signal handlers registered");
 
+    DEBUG("Initializing SOUP Server...");
+    soupServer = soup_server_new(SOUP_SERVER_PORT, opt_port, NULL);
+    soup_server_run_async(soupServer);
+    DEBUG("SOUP Server initialized");
+
     DEBUG("Initializing main loop...");
     loop = g_main_loop_new(NULL, FALSE);
     DEBUG("Starting main loop...");
     g_main_loop_run(loop);
     DEBUG("Main loop exited");
+
+    DEBUG("Cleaning up SOUP Server...");
+    soup_server_disconnect(soupServer);
+    DEBUG("SOUP Server cleaned up");
 
     return 0;
 }

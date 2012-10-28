@@ -10,6 +10,37 @@
 #include <config.h>
 #include "utils.h"
 
+GMainLoop *loop;
+
+
+void signal_handle(int signal_type)
+{
+    DEBUG("Handling signal %i", signal_type);
+
+    g_main_loop_quit(loop);
+}
+
+#ifdef SIGHUP
+void signal_hup()
+{
+    signal_handle(SIGHUP);
+    signal(SIGHUP, signal_hup);
+}
+#endif //SIGHUP
+
+void signal_term()
+{
+    signal_handle(SIGTERM);
+    signal(SIGTERM, signal_term);
+}
+
+void signal_int()
+{
+    signal_handle(SIGINT);
+    signal(SIGINT, signal_int);
+}
+
+
 int main(int argc, char **argv)
 {
     g_type_init();
@@ -40,6 +71,19 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    printf("Hello world");
+    DEBUG("Registering signal handlers...");
+    #ifdef SIGHUP
+        signal(SIGHUP, signal_hup);
+    #endif //SIGHUP
+    signal(SIGTERM, signal_term);
+    signal(SIGINT, signal_int);
+    DEBUG("Signal handlers registered");
+
+    DEBUG("Initializing main loop...");
+    loop = g_main_loop_new(NULL, FALSE);
+    DEBUG("Starting main loop...");
+    g_main_loop_run(loop);
+    DEBUG("Main loop exited");
+
     return 0;
 }

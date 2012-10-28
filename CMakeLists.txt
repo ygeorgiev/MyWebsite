@@ -36,7 +36,7 @@ include_directories(${GTK2_INCLUDE_DIRS} ${LIBNOTIFY_INCLUDE_DIRS})
 # Add targets
 add_executable(mysite main.c)
 target_link_libraries(mysite ${GTK2_GLIB_LIBRARY} ${GIO_HACK})
-install(TARGETS mysite BINARY DESTINATION bin)
+install(TARGETS mysite RUNTIME DESTINATION bin)
 
 
 

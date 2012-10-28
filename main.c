@@ -92,6 +92,10 @@ int main(int argc, char **argv)
 
     DEBUG("Initializing SOUP Server...");
     soupServer = soup_server_new(SOUP_SERVER_PORT, opt_port, NULL);
+    GValue server_header = G_VALUE_INIT;
+    g_value_init(&server_header, G_TYPE_STRING);
+    g_value_set_static_string(&server_header, SERVER_HEADER);
+    g_object_set_property((GObject*)soupServer, "server-header", &server_header);
     soup_server_run_async(soupServer);
     DEBUG("SOUP Server initialized");
 

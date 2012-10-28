@@ -55,12 +55,14 @@ int main(int argc, char **argv)
     g_type_init();
 
     int opt_port = 8080;
+    gboolean opt_daemonize = FALSE;
     gboolean opt_debug = FALSE;
     gboolean opt_version = FALSE;
     GOptionContext *opt_context;
     GError *error;
     GOptionEntry opt_entries[] = 
         {
+            {"daomonize", 'D', 0, G_OPTION_ARG_NONE, &opt_daemonize, "Daemonize     (fork)", NULL},
             {"port", 'p', 0, G_OPTION_ARG_INT, &opt_port, "Set port (default: 8080)", NULL},
             {"version", 'v', 0, G_OPTION_ARG_NONE, &opt_version, "Show version", NULL},
             {"debug", 'd', 0, G_OPTION_ARG_NONE, &opt_debug, "Enable debugging", NULL},
@@ -81,6 +83,24 @@ int main(int argc, char **argv)
         printf("My Website Server version %s\n", PACKAGE_VERSION);
         return 0;
     }
+
+    if(opt_daemonize)
+    {   
+        DEBUG("Daemonizing...");
+        int frk = fork();
+        if(frk < 0)
+        {
+            g_printerr("Error forking!");
+            return 3;
+        }
+        else if(frk != 0)
+        {
+            DEBUG("Forked to %i. Exiting parent...", frk);
+            return 0;
+        }
+        DEBUG("Deamonization complete");
+        //Forked child will continue past here
+    }   
 
     DEBUG("Registering signal handlers...");
     #ifdef SIGHUP

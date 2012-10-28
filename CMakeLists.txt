@@ -30,12 +30,13 @@ include_directories(${CMAKE_SOURCE_DIR})
 set(GIO_HACK "-lgio-2.0 -lgobject-2.0")
 
 include(FindGTK2)
+include(FindLibSoup2.cmake)
 
-include_directories(${GTK2_INCLUDE_DIRS} ${LIBNOTIFY_INCLUDE_DIRS})
+include_directories(${GTK2_INCLUDE_DIRS} ${LIBSOUP2_INCLUDE_DIRS})
 
 # Add targets
 add_executable(mysite main.c)
-target_link_libraries(mysite ${GTK2_GLIB_LIBRARY} ${GIO_HACK})
+target_link_libraries(mysite ${GTK2_GLIB_LIBRARY} ${LIBSOUP2_LIBRARIES} ${GIO_HACK})
 install(TARGETS mysite RUNTIME DESTINATION bin)
 
 

@@ -20,19 +20,23 @@ set(INSTALLBIN bin)
 set(INSTALLLIB lib)
 set(INSTALLARC lib)
 
-# Generate config.h
-configure_file("config.h.in" "config.h")
-include_directories(${CMAKE_BINARY_DIR})
-include_directories(${CMAKE_SOURCE_DIR})
-
 # Continue with the building
 #This hack is because for some reason GTK2_LIBS does not include gio
 set(GIO_HACK "-lgio-2.0 -lgobject-2.0")
 
 include(FindGTK2)
 include(FindLibSoup2.cmake)
+include(FindGit.cmake)
 
 include_directories(${GTK2_INCLUDE_DIRS} ${LIBSOUP2_INCLUDE_DIRS})
+
+# Get git info
+Git_WC_INFO(${CMAKE_SOURCE_DIR} MY)
+
+# Generate config.h
+configure_file("config.h.in" "config.h")
+include_directories(${CMAKE_BINARY_DIR})
+include_directories(${CMAKE_SOURCE_DIR})
 
 # Add targets
 add_executable(mysite main.c)

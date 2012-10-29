@@ -54,6 +54,16 @@ add_subdirectory(modules)
 
 
 
+# Add support for "make docs"
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+configure_file("Doxyfile.in" "Doxyfile")
+add_custom_target(doc
+${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/Doxyfile
+WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+COMMENT "Generating API documentation with Doxygen" VERBATIM
+)
+endif(DOXYGEN_FOUND)
 
 # Add support for "make dist"
 set(ARCHIVE_NAME ${CMAKE_PROJECT_NAME}-${PROJECT_VERSION})

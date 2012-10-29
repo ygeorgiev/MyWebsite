@@ -45,7 +45,7 @@ static void doesntexist_callback(SoupServer *server,
                           SoupClientContext *client,
                           gpointer user_data)
 {
-    DEBUG("Nonexistent page called: %s", path);
+    DEBUG("Nonexistent page called: %s", path, NULL);
 
     soup_message_set_status(msg, SOUP_STATUS_OK);
     soup_message_set_response(msg, "text/html", SOUP_MEMORY_STATIC, doesntexist_html, strlen(doesntexist_html));

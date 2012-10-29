@@ -1,44 +1,38 @@
 #include "utils.h"
 
-int debug_tab = 0;
-void increase_debug_tab()
+guint  debug_handler;
+
+void debug_func(const gchar *log_domain,
+                GLogLevelFlags log_level,
+                const gchar *message,
+                gpointer user_data)
 {
-    debug_tab++;
+    printf("DEBUG: %s\n", message);
 }
 
-void decrease_debug_tab()
-{
-    debug_tab--;
-}
-
-void reset_debug_tab()
-{
-    debug_tab = 0;
-}
-
-void print_debug_tab()
-{
-    int i;
-    for(i = 0; i < debug_tab; i++)
-        printf("\t");
-}
-
-bool enable_debug;
 void set_debug(bool new_val)
 {
-    enable_debug = new_val;
+    if(new_val && !debug_handler)
+    {
+        debug_handler = g_log_set_handler(G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, debug_func, NULL);
+    }
+    else if(debug_handler)
+    {
+        g_log_remove_handler(G_LOG_DOMAIN, debug_handler);
+        debug_handler = 0;
+    }
 
-    DEBUG("Debugging enabled.");
-    DEBUG("Compiled at: %s %s", __DATE__, __TIME__);
+    DEBUG("Debugging enabled.", NULL);
+    DEBUG("Compiled at: %s %s", __DATE__, __TIME__, NULL);
     #ifdef __GNUC__
-        DEBUG("Compiler used: GCC %s", __VERSION__);
+        DEBUG("Compiler used: GCC %s", __VERSION__, NULL);
     #else
-        DEBUG("Compiler used: non-GCC");
+        DEBUG("Compiler used: non-GCC", NULL);
     #endif
 }
 
 bool get_debug()
 {
-    return enable_debug;
+    return debug_handler != 0;
 }
 

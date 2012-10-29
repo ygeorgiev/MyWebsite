@@ -48,12 +48,12 @@ static void test_callback(SoupServer *server,
                           SoupClientContext *client,
                           gpointer user_data)
 {
-    DEBUG("test webpage called with path: %s", path);
+    DEBUG("test webpage called with path: %s", path, NULL);
 
     soup_message_set_status(msg, SOUP_STATUS_OK);
     soup_message_set_response(msg, "text/html", SOUP_MEMORY_STATIC, test_html, strlen(test_html));
 
-    DEBUG("test webpage returned");
+    DEBUG("test webpage returned", NULL);
 }
 
 bool deploy(SoupServer *server)

@@ -28,61 +28,61 @@ GSList *monitors;
 void module_deploy(GFile *module_path)
 {
     char *path = g_file_get_path(module_path);
-    DEBUG("Loading module at path %s...", path);
+    DEBUG("Loading module at path %s...", path, NULL);
 
     WebModule *newModule = malloc(sizeof(WebModule));
     newModule->module = g_module_open(path, G_MODULE_BIND_MASK);
     if(!newModule->module)
     {
-        DEBUG("Error loading module: %s", g_module_error());
+        DEBUG("Error loading module: %s", g_module_error(), NULL);
         return;
     }
-    DEBUG("Module loaded");
+    DEBUG("Module loaded", NULL);
 
-    DEBUG("Checking interface version...");
+    DEBUG("Checking interface version...", NULL);
     if(!g_module_symbol(newModule->module, "get_interface_version", (gpointer*)(&newModule->get_interface_version)))
     {
-        DEBUG("Error getting symbol 'get_interface_version': %s", g_module_error());
+        DEBUG("Error getting symbol 'get_interface_version': %s", g_module_error(), NULL);
         return;
     }
     if(newModule->get_interface_version() != WEB_MODULE_INTERFACE_VERSION)
     {
-        DEBUG("Unsupported interface version. Supported: %i, found: %i", WEB_MODULE_INTERFACE_VERSION, newModule->get_interface_version());
+        DEBUG("Unsupported interface version. Supported: %i, found: %i", WEB_MODULE_INTERFACE_VERSION, newModule->get_interface_version(), NULL);
         return;
     }
-    DEBUG("Module interface version: %i", newModule->get_interface_version());
+    DEBUG("Module interface version: %i", newModule->get_interface_version(), NULL);
 
-    DEBUG("Getting other symbols...");
+    DEBUG("Getting other symbols...", NULL);
     if(!g_module_symbol(newModule->module, "get_name", (gpointer*)(&newModule->get_name)))
     {
-        DEBUG("Error getting symbol 'get_name': %s", g_module_error());
+        DEBUG("Error getting symbol 'get_name': %s", g_module_error(), NULL);
         return;
     }
     if(!g_module_symbol(newModule->module, "get_version", (gpointer*)(&newModule->get_version)))
     {
-        DEBUG("Error getting symbol 'get_version': %s", g_module_error());
+        DEBUG("Error getting symbol 'get_version': %s", g_module_error(), NULL);
         return;
     }
     if(!g_module_symbol(newModule->module, "deploy", (gpointer*)(&newModule->deploy)))
     {
-        DEBUG("Error getting symbol 'deploy': %s", g_module_error());
+        DEBUG("Error getting symbol 'deploy': %s", g_module_error(), NULL);
         return;
     }
     if(!g_module_symbol(newModule->module, "undeploy", (gpointer*)(&newModule->undeploy)))
     {
-        DEBUG("Error getting symbol 'undeploy': %s", g_module_error());
+        DEBUG("Error getting symbol 'undeploy': %s", g_module_error(), NULL);
         return;
     }
-    DEBUG("Symbols linked");
+    DEBUG("Symbols linked", NULL);
 
-    DEBUG("Module %s, version %i loaded, deploying...", newModule->get_name(), newModule->get_version());
+    DEBUG("Module %s, version %i loaded, deploying...", newModule->get_name(), newModule->get_version(), NULL);
     if(newModule->deploy(soupServer))
     {
-        DEBUG("Module deployed");
+        DEBUG("Module deployed", NULL);
     }
     else
     {
-        DEBUG("Error during module deployment");
+        DEBUG("Error during module deployment", NULL);
     }
 
     g_hash_table_insert(web_modules, path, newModule);
@@ -98,31 +98,31 @@ void module_undeploy(GFile *module_path)
 {
     char *path = g_file_get_path(module_path);
 
-    DEBUG("Getting module struct for module at %s...", path);
+    DEBUG("Getting module struct for module at %s...", path, NULL);
     WebModule *module = (WebModule*)g_hash_table_lookup(web_modules, path);
     if(module == NULL)
     {
-        DEBUG("Error: module == NULL");
+        DEBUG("Error: module == NULL", NULL);
         return;
     }
-    DEBUG("Module struct for %s (version %i) found, undeploying...", module->get_name(), module->get_version());
+    DEBUG("Module struct for %s (version %i) found, undeploying...", module->get_name(), module->get_version(), NULL);
     module->undeploy(soupServer);
-    DEBUG("Module undeployed");
-    DEBUG("Closing module...");
+    DEBUG("Module undeployed", NULL);
+    DEBUG("Closing module...", NULL);
     if(!g_module_close(module->module))
     {
-        DEBUG("Error closing module: %s", g_module_error());
+        DEBUG("Error closing module: %s", g_module_error(), NULL);
         return;
     }
-    DEBUG("Module closed");
+    DEBUG("Module closed", NULL);
 
-    DEBUG("Removing module from web_modules...");
+    DEBUG("Removing module from web_modules...", NULL);
     if(!g_hash_table_remove(web_modules, path))
     {
-        DEBUG("Was not found??");
+        DEBUG("Was not found??", NULL);
         return;
     }
-    DEBUG("Module removed from web_modules");
+    DEBUG("Module removed from web_modules", NULL);
 
     g_free(path);
 }
@@ -143,16 +143,16 @@ void modules_undeploy(gpointer key,
     if(module == NULL)
         return;
 
-    DEBUG("Undeploying module %s (version %i)...", module->get_name(), module->get_version());
+    DEBUG("Undeploying module %s (version %i)...", module->get_name(), module->get_version(), NULL);
     module->undeploy(soupServer);
-    DEBUG("Module undeployed");
-    DEBUG("Closing module...");
+    DEBUG("Module undeployed", NULL);
+    DEBUG("Closing module...", NULL);
     if(!g_module_close(module->module))
     {
-        DEBUG("Error closing module: %s", g_module_error());
+        DEBUG("Error closing module: %s", g_module_error(), NULL);
         return;
     }
-    DEBUG("Module closed");
+    DEBUG("Module closed", NULL);
 }
 
 void file_changed(GFileMonitor *monitor,
@@ -215,7 +215,7 @@ bool adddir(GFile *file, GError **error)
     }
 
     gchar *path = g_file_get_parse_name(file);
-    DEBUG("\tStarting to watch %s", path);
+    DEBUG("\tStarting to watch %s", path, NULL);
     g_free(path);
 
     GFileMonitor *mon = g_file_monitor(file, G_FILE_MONITOR_NONE, NULL, error);
@@ -227,11 +227,11 @@ bool adddir(GFile *file, GError **error)
     g_signal_connect(mon, "changed", G_CALLBACK(file_changed), NULL);
 
     //Add any child sub-directories and HWM files recursively
-    DEBUG("\t\tDirectory, adding sub-dirs...");
+    DEBUG("\t\tDirectory, adding sub-dirs...", NULL);
     GFileEnumerator *enumer = g_file_enumerate_children(file, "standard::*", G_FILE_QUERY_INFO_NONE, NULL, error);
     if(enumer == NULL)
     {
-        DEBUG("Invalid enumerator?? Error: %s", (*error)->message);
+        DEBUG("Invalid enumerator?? Error: %s", (*error)->message, NULL);
         return false;
     }
     GFileInfo *childInfo;
@@ -274,7 +274,8 @@ void file_changed(GFileMonitor *monitor,
             msg,
             event,
             ((file) ? g_file_get_basename(file) : "--"),
-            ((other_file) ? g_file_get_basename(other_file) : "--"));
+            ((other_file) ? g_file_get_basename(other_file) : "--"),
+            NULL);
 
     if(g_file_query_file_type(file, G_FILE_QUERY_INFO_NONE, NULL) == G_FILE_TYPE_DIRECTORY)
     {
@@ -309,7 +310,7 @@ void file_changed(GFileMonitor *monitor,
  */
 void signal_handle(int signal_type)
 {
-    DEBUG("Handling signal %i", signal_type);
+    DEBUG("Handling signal %i", signal_type, NULL);
 
     g_main_loop_quit(loop);
 }
@@ -393,7 +394,7 @@ int main(int argc, char **argv)
 
     if(opt_daemonize)
     {   
-        DEBUG("Daemonizing...");
+        DEBUG("Daemonizing...", NULL);
         int frk = fork();
         if(frk < 0)
         {
@@ -402,26 +403,26 @@ int main(int argc, char **argv)
         }
         else if(frk != 0)
         {
-            DEBUG("Forked to %i. Exiting parent...", frk);
+            DEBUG("Forked to %i. Exiting parent...", frk, NULL);
             return 0;
         }
-        DEBUG("Deamonization complete");
+        DEBUG("Deamonization complete", NULL);
         //Forked child will continue past here
     }   
 
-    DEBUG("Registering signal handlers...");
+    DEBUG("Registering signal handlers...", NULL);
     #ifdef SIGHUP
         signal(SIGHUP, signal_hup);
     #endif //SIGHUP
     signal(SIGTERM, signal_term);
     signal(SIGINT, signal_int);
-    DEBUG("Signal handlers registered");
+    DEBUG("Signal handlers registered", NULL);
 
-    DEBUG("Initializing storage...");
+    DEBUG("Initializing storage...", NULL);
     web_modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
-    DEBUG("Storage initialized");
+    DEBUG("Storage initialized", NULL);
 
-    DEBUG("Initializing SOUP Server...");
+    DEBUG("Initializing SOUP Server...", NULL);
     soupServer = soup_server_new(SOUP_SERVER_PORT, opt_port, NULL);
     if(soupServer == NULL)
     {
@@ -435,27 +436,27 @@ int main(int argc, char **argv)
     gint port;
     g_object_get(soupServer, "port", &port, NULL);
     soup_server_run_async(soupServer);
-    DEBUG("SOUP Server initialized using port: %i", port);
+    DEBUG("SOUP Server initialized using port: %i", port, NULL);
 
-    DEBUG("Initializing module deployment watcher...");
+    DEBUG("Initializing module deployment watcher...", NULL);
     adddir(g_file_new_for_path(opt_rootdir), &error);
-    DEBUG("Deployment watcher initialized");
+    DEBUG("Deployment watcher initialized", NULL);
 
-    DEBUG("Initializing main loop...");
+    DEBUG("Initializing main loop...", NULL);
     loop = g_main_loop_new(NULL, FALSE);
-    DEBUG("Starting main loop...");
+    DEBUG("Starting main loop...", NULL);
     g_main_loop_run(loop);
-    DEBUG("Main loop exited");
+    DEBUG("Main loop exited", NULL);
 
-    DEBUG("Cleaning up file system watcher...");
+    DEBUG("Cleaning up file system watcher...", NULL);
     g_slist_free_full(monitors, g_object_unref);
-    DEBUG("File system watcher cleaned up");
-    DEBUG("Undeploying all modules...");
+    DEBUG("File system watcher cleaned up", NULL);
+    DEBUG("Undeploying all modules...", NULL);
     g_hash_table_foreach(web_modules, modules_undeploy, NULL);
-    DEBUG("All modules undeployed");
-    DEBUG("Cleaning up SOUP Server...");
+    DEBUG("All modules undeployed", NULL);
+    DEBUG("Cleaning up SOUP Server...", NULL);
     soup_server_disconnect(soupServer);
-    DEBUG("SOUP Server cleaned up");
+    DEBUG("SOUP Server cleaned up", NULL);
 
     return 0;
 }

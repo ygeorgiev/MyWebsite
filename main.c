@@ -18,6 +18,13 @@ GSList *monitors;
 
 
 
+/**
+ * Deploys a module in the MyWebsite web server.
+ *
+ * This function loads the module specified in module_path, constructs a strct WebModule for it, and calls it's deploy(SoupServer *) function.
+ * In case of errors, it will log it (DEBUG) and just return
+ * @param module_path A GFile pointer to the module library file
+ */
 void module_deploy(GFile *module_path)
 {
     char *path = g_file_get_path(module_path);
@@ -81,6 +88,12 @@ void module_deploy(GFile *module_path)
     g_hash_table_insert(web_modules, path, newModule);
 }
 
+/**
+ * Undeploys a module in the MyWebsite web server.
+ *
+ * This function calls the undeploy(SoupServer *) function of the specified module and closes the module file.
+ * @param module_path A GFile pointer to the module library file
+ */
 void module_undeploy(GFile *module_path)
 {
     char *path = g_file_get_path(module_path);
@@ -114,6 +127,14 @@ void module_undeploy(GFile *module_path)
     g_free(path);
 }
 
+/**
+ * This function is used in a loop over all loaded modules to undeploy them.
+ *
+ * This function will call undeploy(SoupServer *) and close the module for the value.
+ * @param key The key used in the GHashTable to reference to this module
+ * @param value The pointer to the struct WebModule that defines this module
+ * @param user_data Extra data provided by GLib, always NULL in the current implementation
+ */
 void modules_undeploy(gpointer key,
                       gpointer value,
                       gpointer user_data)
@@ -139,6 +160,12 @@ void file_changed(GFileMonitor *monitor,
                     GFile *other_file,
                     GFileMonitorEvent event,
                     gpointer user_data);
+
+/**
+ * @internal
+ * A helper function used to be able to print nice debug messages
+ * @endinternal
+ */
 char *
 decode (GFileMonitorEvent ev)
 {
@@ -167,6 +194,15 @@ break;
     return fmt;
 }
 
+/**
+ * This either watches for changes in file, or try to deploy file.
+ *
+ * If file is a directory, it will add a new GFileMonitor for it and watch it.
+ * If file is a normal file, it will try to deploy it using module_deploy(GFile *).
+ * @param file The file or directory to check
+ * @param error Output for the error, if adding fails
+ * @return True if succesfully added file and it's sub-directories. False otherwise
+ */
 bool adddir(GFile *file, GError **error)
 {
     //First check if we will need to watch this "file"
@@ -217,21 +253,28 @@ bool adddir(GFile *file, GError **error)
     return true;
 }
 
+/**
+ * This function gets called whenever a watched file or directory changes.
+ *
+ * If a new directory is created, it will call adddir(GFile *, GError **) to add a watcher for it.
+ * If a new file is created, it will try to deploy it using module_deploy(GFile *).
+ * If a file is deleted, it will try to undeploy it using module_undeploy(GFile *).
+ * If a file is changed, it will try to undeploy it using module_undeploy(GFile *) and re-load it using module_deploy(GFile *).
+ */
 void file_changed(GFileMonitor *monitor,
                     GFile *file,
                     GFile *other_file,
                     GFileMonitorEvent event,
                     gpointer user_data)
 {
-    #define fn(x) ((x) ? g_file_get_basename (x) : "--")
     char *msg = decode(event);
     GError *error = NULL;
 
     DEBUG("Received event %s (code %d), first file \"%s\", second file \"%s\"",
             msg,
             event,
-            fn(file),
-            fn(other_file));
+            ((file) ? g_file_get_basename(file) : "--"),
+            ((other_file) ? g_file_get_basename(other_file) : "--"));
 
     if(g_file_query_file_type(file, G_FILE_QUERY_INFO_NONE, NULL) == G_FILE_TYPE_DIRECTORY)
     {
@@ -257,11 +300,13 @@ void file_changed(GFileMonitor *monitor,
     }
 
     g_free(msg);
-    #undef fn
 }
 
 
 
+/**
+ * This function handles signals by exiting the server.
+ */
 void signal_handle(int signal_type)
 {
     DEBUG("Handling signal %i", signal_type);
@@ -270,6 +315,11 @@ void signal_handle(int signal_type)
 }
 
 #ifdef SIGHUP
+/**
+ * This function is the handler for the SIGHUP call.
+ *
+ * It calls signal_handle(int) to handle it)
+ */
 void signal_hup()
 {
     signal_handle(SIGHUP);
@@ -277,19 +327,34 @@ void signal_hup()
 }
 #endif //SIGHUP
 
+/**
+ * This function is the handler for the SIGTERM call.
+ *
+ * It calls signal_handle(int) to handle it)
+ */
 void signal_term()
 {
     signal_handle(SIGTERM);
     signal(SIGTERM, signal_term);
 }
 
+/**
+ * This function is the handler for the SIGINT call.
+ *
+ * It calls signal_handle(int) to handle it)
+ */
 void signal_int()
 {
     signal_handle(SIGINT);
     signal(SIGINT, signal_int);
 }
 
-
+/**
+ * This function is the main entry function for the MyWebsite web server.
+ *
+ * It will initialize the Soup server and GLib, parse the command-line arguments, setup the file monitor for the rootdir, and start everything.
+ * After the main loop exits, it will also clear up everything.
+ */
 int main(int argc, char **argv)
 {
     g_type_init();

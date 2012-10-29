@@ -12,7 +12,7 @@
 #include "web_module.h"
 
 GMainLoop *loop;
-SoupServer *soupServer;
+WebServer *thisServer;
 GHashTable *web_modules;
 GSList *monitors;
 
@@ -76,7 +76,7 @@ void module_install(GFile *module_path)
     DEBUG("Symbols linked", NULL);
 
     DEBUG("Module %s, version %i loaded, installing...", newModule->get_name(), newModule->get_version(), NULL);
-    if(newModule->install(soupServer))
+    if(newModule->install(thisServer))
     {
         DEBUG("Module installed", NULL);
     }
@@ -106,7 +106,7 @@ void module_uninstall(GFile *module_path)
         return;
     }
     DEBUG("Module struct for %s (version %i) found, uninstalling...", module->get_name(), module->get_version(), NULL);
-    module->uninstall(soupServer);
+    module->uninstall(thisServer);
     DEBUG("Module uninstalled", NULL);
     DEBUG("Closing module...", NULL);
     if(!g_module_close(module->module))
@@ -148,7 +148,7 @@ void modules_uninstall(gpointer key,
         return;
 
     DEBUG("Uninstalling module %s (version %i)...", module->get_name(), module->get_version(), NULL);
-    module->uninstall(soupServer);
+    module->uninstall(thisServer);
     DEBUG("Module uninstalled", NULL);
     DEBUG("Closing module...", NULL);
     if(!g_module_close(module->module))
@@ -427,12 +427,13 @@ int main(int argc, char **argv)
     DEBUG("Signal handlers registered", NULL);
 
     DEBUG("Initializing storage...", NULL);
+    thisServer = malloc(sizeof(WebServer));
     web_modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     DEBUG("Storage initialized", NULL);
 
     DEBUG("Initializing SOUP Server...", NULL);
-    soupServer = soup_server_new(SOUP_SERVER_PORT, opt_port, NULL);
-    if(soupServer == NULL)
+    thisServer->soupServer = soup_server_new(SOUP_SERVER_PORT, opt_port, NULL);
+    if(thisServer->soupServer == NULL)
     {
         g_printerr("Error initializing Soup server. Exiting.\n");
         return 1;
@@ -440,10 +441,10 @@ int main(int argc, char **argv)
     GValue server_header = G_VALUE_INIT;
     g_value_init(&server_header, G_TYPE_STRING);
     g_value_set_static_string(&server_header, SERVER_HEADER);
-    g_object_set_property((GObject*)soupServer, "server-header", &server_header);
+    g_object_set_property((GObject*)(thisServer->soupServer), "server-header", &server_header);
     gint port;
-    g_object_get(soupServer, "port", &port, NULL);
-    soup_server_run_async(soupServer);
+    g_object_get(thisServer->soupServer, "port", &port, NULL);
+    soup_server_run_async(thisServer->soupServer);
     DEBUG("SOUP Server initialized using port: %i", port, NULL);
 
     DEBUG("Initializing module installment watcher...", NULL);
@@ -463,8 +464,12 @@ int main(int argc, char **argv)
     g_hash_table_foreach(web_modules, modules_uninstall, NULL);
     DEBUG("All modules uninstalled", NULL);
     DEBUG("Cleaning up SOUP Server...", NULL);
-    soup_server_disconnect(soupServer);
+    soup_server_disconnect(thisServer->soupServer);
     DEBUG("SOUP Server cleaned up", NULL);
+    DEBUG("Cleaning up storage...", NULL);
+    g_hash_table_unref(web_modules);
+    free(thisServer);
+    DEBUG("Storage cleanedup", NULL);
 
     return 0;
 }

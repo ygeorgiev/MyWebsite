@@ -15,17 +15,21 @@
 
 #define WEB_MODULE_INTERFACE_VERSION 1
 
+struct _WebServer
+{
+    SoupServer *soupServer;
+};
+typedef struct _WebServer WebServer;
+
 struct _WebModule
 {
     GModule *module;
     const int (*get_interface_version)();
     const char *(*get_name)();
     const int (*get_version)();
-    bool (*install)(SoupServer *server);
-    void (*uninstall)(SoupServer *server);
+    bool (*install)(WebServer *server);
+    void (*uninstall)(WebServer *server);
 };
-
 typedef struct _WebModule WebModule;
-
 
 #endif //WEB_MODULE_H_INCLUDED

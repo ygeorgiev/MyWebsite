@@ -35,9 +35,9 @@ static void blank_callback(SoupServer *server,
 {
 }
 
-bool install(SoupServer *server)
+bool install(WebServer *server)
 {   
-    soup_server_add_handler(server,
+    soup_server_add_handler(server->soupServer,
                             "",
                             test_callback,
                             NULL,
@@ -46,8 +46,8 @@ bool install(SoupServer *server)
     return true;
 }
 
-void uninstall(SoupServer *server)
+void uninstall(WebServer *server)
 {
-    soup_server_remove_handler(server,
+    soup_server_remove_handler(server->soupServer,
                               "");
 }

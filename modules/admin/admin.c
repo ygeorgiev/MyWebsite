@@ -69,7 +69,7 @@ char *admin_auth_callback (SoupAuthDomain *domain,
 
 SoupAuthDomain *admin_domain = NULL;
 
-bool install(SoupServer *server)
+bool install(WebServer *server)
 {
     admin_domain = soup_auth_domain_digest_new(SOUP_AUTH_DOMAIN_REALM, "MyWebsite Admin",
                                                SOUP_AUTH_DOMAIN_DIGEST_AUTH_CALLBACK, admin_auth_callback,
@@ -77,9 +77,9 @@ bool install(SoupServer *server)
                                                SOUP_AUTH_DOMAIN_ADD_PATH, "/admin",
                                                NULL);
 
-    soup_server_add_auth_domain(server, admin_domain);
+    soup_server_add_auth_domain(server->soupServer, admin_domain);
 
-    soup_server_add_handler(server,
+    soup_server_add_handler(server->soupServer,
                             "/admin",
                             admin_callback,
                             NULL,
@@ -88,9 +88,9 @@ bool install(SoupServer *server)
     return true;
 }
 
-void uninstall(SoupServer *server)
+void uninstall(WebServer *server)
 {
-    soup_server_remove_handler(server,
+    soup_server_remove_handler(server->soupServer,
                               "/admin");
-    soup_server_remove_auth_domain(server, admin_domain);
+    soup_server_remove_auth_domain(server->soupServer, admin_domain);
 }

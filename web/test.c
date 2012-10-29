@@ -10,6 +10,20 @@
 #include <config.h>
 #include <utils.h>
 
+static const char test_html[] = 
+    "<html>"
+    "   <head>"
+    "       <title>MyWebsite testing page</title>"
+    "   </head>"
+    "   <body>"
+    "       <h1>MyWebsite</h1>"
+    "       This website is powered by MyWebsite, an Ansi C custom web server.<br />"
+    "       This website is running version: "
+    PACKAGE_VERSION
+    "       <br />"
+    "   </body>"
+    "</html>";
+
 static void test_callback(SoupServer *server,
                           SoupMessage *msg,
                           const char *path,
@@ -20,7 +34,7 @@ static void test_callback(SoupServer *server,
     DEBUG("test webpage called with path: %s", path);
 
     soup_message_set_status(msg, SOUP_STATUS_OK);
-    soup_message_set_response(msg, "text/plain", SOUP_MEMORY_STATIC, "ok", 3);
+    soup_message_set_response(msg, "text/html", SOUP_MEMORY_STATIC, test_html, strlen(test_html));
 
     DEBUG("test webpage returned");
 }

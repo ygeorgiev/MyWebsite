@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 # Start
-project(hwm)
+project(MyWebsite)
 
 # Setup toolchain
 SET (CMAKE_C_FLAGS                "-Wall -std=c99")

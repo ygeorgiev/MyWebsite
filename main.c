@@ -423,6 +423,11 @@ int main(int argc, char **argv)
 
     DEBUG("Initializing SOUP Server...");
     soupServer = soup_server_new(SOUP_SERVER_PORT, opt_port, NULL);
+    if(soupServer == NULL)
+    {
+        g_printerr("Error initializing Soup server. Exiting.\n");
+        return 1;
+    }
     GValue server_header = G_VALUE_INIT;
     g_value_init(&server_header, G_TYPE_STRING);
     g_value_set_static_string(&server_header, SERVER_HEADER);

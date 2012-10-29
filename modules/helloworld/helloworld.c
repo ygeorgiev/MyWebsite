@@ -73,5 +73,8 @@ void undeploy(SoupServer *server)
 {
     DEBUG("Undeploying helloworld web module...");
 
-    DEBUG("ERROR: NO-OP");
+    soup_server_remove_handler(server,
+                              "/helloworld");
+
+    DEBUG("Helloworld web module undeployed");
 }

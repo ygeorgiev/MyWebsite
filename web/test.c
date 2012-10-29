@@ -8,7 +8,7 @@
 #include <libsoup/soup.h>
 
 #include <config.h>
-#include "utils.h"
+#include <utils.h>
 
 static void test_callback(SoupServer *server,
                           SoupMessage *msg,

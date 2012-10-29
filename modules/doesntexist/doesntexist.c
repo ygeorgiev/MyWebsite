@@ -51,7 +51,7 @@ static void doesntexist_callback(SoupServer *server,
     soup_message_set_response(msg, "text/html", SOUP_MEMORY_STATIC, doesntexist_html, strlen(doesntexist_html));
 }
 
-bool deploy(SoupServer *server)
+bool install(SoupServer *server)
 {   
     soup_server_add_handler(server,
                             NULL,
@@ -62,7 +62,7 @@ bool deploy(SoupServer *server)
     return true;
 }
 
-void undeploy(SoupServer *server)
+void uninstall(SoupServer *server)
 {
     soup_server_remove_handler(server,
                               NULL);

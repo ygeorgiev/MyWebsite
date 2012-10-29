@@ -19,13 +19,13 @@ GSList *monitors;
 
 
 /**
- * Deploys a module in the MyWebsite web server.
+ * Installs a module in the MyWebsite web server.
  *
- * This function loads the module specified in module_path, constructs a strct WebModule for it, and calls it's deploy(SoupServer *) function.
+ * This function loads the module specified in module_path, constructs a strct WebModule for it, and calls it's install(SoupServer *) function.
  * In case of errors, it will log it (DEBUG) and just return
  * @param module_path A GFile pointer to the module library file
  */
-void module_deploy(GFile *module_path)
+void module_install(GFile *module_path)
 {
     char *path = g_file_get_path(module_path);
     DEBUG("Loading module at path %s...", path, NULL);
@@ -63,38 +63,38 @@ void module_deploy(GFile *module_path)
         DEBUG("Error getting symbol 'get_version': %s", g_module_error(), NULL);
         return;
     }
-    if(!g_module_symbol(newModule->module, "deploy", (gpointer*)(&newModule->deploy)))
+    if(!g_module_symbol(newModule->module, "install", (gpointer*)(&newModule->install)))
     {
-        DEBUG("Error getting symbol 'deploy': %s", g_module_error(), NULL);
+        DEBUG("Error getting symbol 'install': %s", g_module_error(), NULL);
         return;
     }
-    if(!g_module_symbol(newModule->module, "undeploy", (gpointer*)(&newModule->undeploy)))
+    if(!g_module_symbol(newModule->module, "uninstall", (gpointer*)(&newModule->uninstall)))
     {
-        DEBUG("Error getting symbol 'undeploy': %s", g_module_error(), NULL);
+        DEBUG("Error getting symbol 'uninstall': %s", g_module_error(), NULL);
         return;
     }
     DEBUG("Symbols linked", NULL);
 
-    DEBUG("Module %s, version %i loaded, deploying...", newModule->get_name(), newModule->get_version(), NULL);
-    if(newModule->deploy(soupServer))
+    DEBUG("Module %s, version %i loaded, installing...", newModule->get_name(), newModule->get_version(), NULL);
+    if(newModule->install(soupServer))
     {
-        DEBUG("Module deployed", NULL);
+        DEBUG("Module installed", NULL);
     }
     else
     {
-        DEBUG("Error during module deployment", NULL);
+        DEBUG("Error during module installment", NULL);
     }
 
     g_hash_table_insert(web_modules, path, newModule);
 }
 
 /**
- * Undeploys a module in the MyWebsite web server.
+ * Uninstalls a module in the MyWebsite web server.
  *
- * This function calls the undeploy(SoupServer *) function of the specified module and closes the module file.
+ * This function calls the uninstall(SoupServer *) function of the specified module and closes the module file.
  * @param module_path A GFile pointer to the module library file
  */
-void module_undeploy(GFile *module_path)
+void module_uninstall(GFile *module_path)
 {
     char *path = g_file_get_path(module_path);
 
@@ -105,9 +105,9 @@ void module_undeploy(GFile *module_path)
         DEBUG("Error: module == NULL", NULL);
         return;
     }
-    DEBUG("Module struct for %s (version %i) found, undeploying...", module->get_name(), module->get_version(), NULL);
-    module->undeploy(soupServer);
-    DEBUG("Module undeployed", NULL);
+    DEBUG("Module struct for %s (version %i) found, uninstalling...", module->get_name(), module->get_version(), NULL);
+    module->uninstall(soupServer);
+    DEBUG("Module uninstalled", NULL);
     DEBUG("Closing module...", NULL);
     if(!g_module_close(module->module))
     {
@@ -128,14 +128,14 @@ void module_undeploy(GFile *module_path)
 }
 
 /**
- * This function is used in a loop over all loaded modules to undeploy them.
+ * This function is used in a loop over all loaded modules to uninstall them.
  *
- * This function will call undeploy(SoupServer *) and close the module for the value.
+ * This function will call uninstall(SoupServer *) and close the module for the value.
  * @param key The key used in the GHashTable to reference to this module
  * @param value The pointer to the struct WebModule that defines this module
  * @param user_data Extra data provided by GLib, always NULL in the current implementation
  */
-void modules_undeploy(gpointer key,
+void modules_uninstall(gpointer key,
                       gpointer value,
                       gpointer user_data)
 {
@@ -143,9 +143,9 @@ void modules_undeploy(gpointer key,
     if(module == NULL)
         return;
 
-    DEBUG("Undeploying module %s (version %i)...", module->get_name(), module->get_version(), NULL);
-    module->undeploy(soupServer);
-    DEBUG("Module undeployed", NULL);
+    DEBUG("Uninstalling module %s (version %i)...", module->get_name(), module->get_version(), NULL);
+    module->uninstall(soupServer);
+    DEBUG("Module uninstalled", NULL);
     DEBUG("Closing module...", NULL);
     if(!g_module_close(module->module))
     {
@@ -195,10 +195,10 @@ break;
 }
 
 /**
- * This either watches for changes in file, or try to deploy file.
+ * This either watches for changes in file, or try to install file.
  *
  * If file is a directory, it will add a new GFileMonitor for it and watch it.
- * If file is a normal file, it will try to deploy it using module_deploy(GFile *).
+ * If file is a normal file, it will try to install it using module_install(GFile *).
  * @param file The file or directory to check
  * @param error Output for the error, if adding fails
  * @return True if succesfully added file and it's sub-directories. False otherwise
@@ -210,7 +210,7 @@ bool adddir(GFile *file, GError **error)
     if(type != G_FILE_TYPE_DIRECTORY)
     {
         //Assume a module
-        module_deploy(file);
+        module_install(file);
         return true;
     }
 
@@ -257,9 +257,9 @@ bool adddir(GFile *file, GError **error)
  * This function gets called whenever a watched file or directory changes.
  *
  * If a new directory is created, it will call adddir(GFile *, GError **) to add a watcher for it.
- * If a new file is created, it will try to deploy it using module_deploy(GFile *).
- * If a file is deleted, it will try to undeploy it using module_undeploy(GFile *).
- * If a file is changed, it will try to undeploy it using module_undeploy(GFile *) and re-load it using module_deploy(GFile *).
+ * If a new file is created, it will try to install it using module_install(GFile *).
+ * If a file is deleted, it will try to uninstall it using module_uninstall(GFile *).
+ * If a file is changed, it will try to uninstall it using module_uninstall(GFile *) and re-load it using module_install(GFile *).
  */
 void file_changed(GFileMonitor *monitor,
                     GFile *file,
@@ -285,19 +285,19 @@ void file_changed(GFileMonitor *monitor,
     }
     else if(event == 2)
     {
-        //File deleted, undeploy
-        module_undeploy(file);
+        //File deleted, uninstall
+        module_uninstall(file);
     }
     else if(event == 3)
     {
-        //File created, deploy
-        module_deploy(file);
+        //File created, install
+        module_install(file);
     }
     else if(event == 1)
     {
-        //File changed, redeploy
-        module_undeploy(file);
-        module_deploy(file);
+        //File changed, reinstall
+        module_uninstall(file);
+        module_install(file);
     }
 
     g_free(msg);
@@ -438,9 +438,9 @@ int main(int argc, char **argv)
     soup_server_run_async(soupServer);
     DEBUG("SOUP Server initialized using port: %i", port, NULL);
 
-    DEBUG("Initializing module deployment watcher...", NULL);
+    DEBUG("Initializing module installment watcher...", NULL);
     adddir(g_file_new_for_path(opt_rootdir), &error);
-    DEBUG("Deployment watcher initialized", NULL);
+    DEBUG("Installment watcher initialized", NULL);
 
     DEBUG("Initializing main loop...", NULL);
     loop = g_main_loop_new(NULL, FALSE);
@@ -451,9 +451,9 @@ int main(int argc, char **argv)
     DEBUG("Cleaning up file system watcher...", NULL);
     g_slist_free_full(monitors, g_object_unref);
     DEBUG("File system watcher cleaned up", NULL);
-    DEBUG("Undeploying all modules...", NULL);
-    g_hash_table_foreach(web_modules, modules_undeploy, NULL);
-    DEBUG("All modules undeployed", NULL);
+    DEBUG("Uninstalling all modules...", NULL);
+    g_hash_table_foreach(web_modules, modules_uninstall, NULL);
+    DEBUG("All modules uninstalled", NULL);
     DEBUG("Cleaning up SOUP Server...", NULL);
     soup_server_disconnect(soupServer);
     DEBUG("SOUP Server cleaned up", NULL);

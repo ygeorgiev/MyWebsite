@@ -21,8 +21,8 @@ struct _WebModule
     const int (*get_interface_version)();
     const char *(*get_name)();
     const int (*get_version)();
-    bool (*deploy)(SoupServer *server);
-    void (*undeploy)(SoupServer *server);
+    bool (*install)(SoupServer *server);
+    void (*uninstall)(SoupServer *server);
 };
 
 typedef struct _WebModule WebModule;

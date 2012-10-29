@@ -69,7 +69,7 @@ char *admin_auth_callback (SoupAuthDomain *domain,
 
 SoupAuthDomain *admin_domain = NULL;
 
-bool deploy(SoupServer *server)
+bool install(SoupServer *server)
 {
     admin_domain = soup_auth_domain_digest_new(SOUP_AUTH_DOMAIN_REALM, "MyWebsite Admin",
                                                SOUP_AUTH_DOMAIN_DIGEST_AUTH_CALLBACK, admin_auth_callback,
@@ -88,7 +88,7 @@ bool deploy(SoupServer *server)
     return true;
 }
 
-void undeploy(SoupServer *server)
+void uninstall(SoupServer *server)
 {
     soup_server_remove_handler(server,
                               "/admin");

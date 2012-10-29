@@ -56,7 +56,7 @@ static void test_callback(SoupServer *server,
     DEBUG("test webpage returned", NULL);
 }
 
-bool deploy(SoupServer *server)
+bool install(SoupServer *server)
 {   
     soup_server_add_handler(server,
                             "/helloworld",
@@ -67,7 +67,7 @@ bool deploy(SoupServer *server)
     return true;
 }
 
-void undeploy(SoupServer *server)
+void uninstall(SoupServer *server)
 {
     soup_server_remove_handler(server,
                               "/helloworld");

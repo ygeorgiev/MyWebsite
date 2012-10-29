@@ -9,6 +9,23 @@
 
 #include <config.h>
 #include <utils.h>
+#include <web_module.h>
+
+int get_interface_version()
+{
+    return WEB_MODULE_INTERFACE_VERSION;
+}
+
+const char *get_name()
+{
+    return "helloworld";
+}
+
+const int get_version()
+{
+    return 1;
+}
+
 
 static const char test_html[] = 
     "<html>"
@@ -39,15 +56,22 @@ static void test_callback(SoupServer *server,
     DEBUG("test webpage returned");
 }
 
-void web_init_test(SoupServer *server)
+void deploy(SoupServer *server)
 {   
-    DEBUG("Initializing test web handler...");
+    DEBUG("Deploying helloworld web module...");
 
     soup_server_add_handler(server,
-                            "/test",
+                            "/helloworld",
                             test_callback,
                             NULL,
                             NULL);
 
-    DEBUG("Test web handler initialized");
+    DEBUG("Helloworld web module deployed");
+}
+
+void undeploy(SoupServer *server)
+{
+    DEBUG("Undeploying helloworld web module...");
+
+    DEBUG("ERROR: NO-OP");
 }

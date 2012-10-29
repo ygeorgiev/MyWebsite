@@ -78,12 +78,32 @@ void module_deploy(GFile *module_path)
         DEBUG("Error during module deployment");
     }
 
-    g_free(path);
+    g_hash_table_insert(web_modules, path, newModule);
 }
 
-void module_undeploy(const GFile *module_path)
+void module_undeploy(GFile *module_path)
 {
+    char *path = g_file_get_path(module_path);
 
+    DEBUG("Getting module struct for module at %s...", path);
+    WebModule *module = (WebModule*)g_hash_table_lookup(web_modules, path);
+    if(module == NULL)
+    {
+        DEBUG("Error: module == NULL");
+        return;
+    }
+    DEBUG("Module struct for %s (version %i) found, undeploying...", module->get_name(), module->get_version());
+    module->undeploy(soupServer);
+    DEBUG("Module undeployed");
+    DEBUG("Closing module...");
+    if(!g_module_close(module->module))
+    {
+        DEBUG("Error closing module: %s", g_module_error());
+        return;
+    }
+    DEBUG("Module closed");
+
+    g_free(path);
 }
 
 
@@ -126,6 +146,8 @@ bool adddir(GFile *file, GError **error)
     GFileType type = g_file_query_file_type(file, G_FILE_QUERY_INFO_NONE, NULL);
     if(type != G_FILE_TYPE_DIRECTORY)
     {
+        //Assume a module
+        module_deploy(file);
         return true;
     }
 
@@ -304,7 +326,7 @@ int main(int argc, char **argv)
     DEBUG("Signal handlers registered");
 
     DEBUG("Initializing storage...");
-    web_modules = g_hash_table_new(g_str_hash, g_str_equal);
+    web_modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     DEBUG("Storage initialized");
 
     DEBUG("Initializing SOUP Server...");

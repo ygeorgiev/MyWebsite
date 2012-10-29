@@ -124,6 +124,10 @@ void module_uninstall(GFile *module_path)
     }
     DEBUG("Module removed from web_modules", NULL);
 
+    DEBUG("Cleaning up WebModule struct...", NULL);
+    free(module);
+    DEBUG("WebModule struct cleaned up", NULL);
+
     g_free(path);
 }
 
@@ -153,6 +157,10 @@ void modules_uninstall(gpointer key,
         return;
     }
     DEBUG("Module closed", NULL);
+
+    DEBUG("Cleaning up WebModule struct...", NULL);
+    free(module);
+    DEBUG("WebModule struct cleaned up", NULL);
 }
 
 void file_changed(GFileMonitor *monitor,

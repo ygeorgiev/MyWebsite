@@ -15,7 +15,12 @@
 #include <config.h>
 
 
-void web_init_test(SoupServer *server);
+struct WebHandler
+{
+    GModule *module;
+    void (*deploy)(SoupServer *server);
+    void (*undeploy)(SoupServer *server);
+};
 
 
 #endif //WEB_H_INCLUDED

@@ -39,8 +39,13 @@ include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR})
 
 # Add targets
-add_executable(mywebsite main.c utils.c web/test.c)
-target_link_libraries(mywebsite ${GTK2_GLIB_LIBRARY} ${LIBSOUP2_LIBRARIES} ${GIO_HACK})
+add_library(mywebsite_utils SHARED utils.c)
+target_link_libraries(mywebsite_utils ${GTK2_GLIB_LIBRARY} ${LIBSOUP2_LIBRARIES} ${GIO_HACK})
+install(TARGETS mywebsite_utils LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+
+
+add_executable(mywebsite main.c)
+target_link_libraries(mywebsite ${GTK2_GLIB_LIBRARY} ${LIBSOUP2_LIBRARIES} ${GIO_HACK} mywebsite_utils)
 install(TARGETS mywebsite RUNTIME DESTINATION bin)
 
 

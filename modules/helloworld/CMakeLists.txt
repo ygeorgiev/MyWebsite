@@ -1,0 +1,4 @@
+add_library(mywebsite_module_helloworld MODULE helloworld.c)
+target_link_libraries(mywebsite_module_helloworld mywebsite_utils)
+
+install(TARGETS mywebsite_module_helloworld LIBRARY DESTINATION lib)

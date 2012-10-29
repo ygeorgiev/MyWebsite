@@ -13,12 +13,19 @@
 #include <config.h>
 
 
-struct WebModule
+#define WEB_MODULE_INTERFACE_VERSION 1
+
+struct _WebModule
 {
     GModule *module;
-    void (*deploy)(SoupServer *server);
+    const int (*get_interface_version)();
+    const char *(*get_name)();
+    const int (*get_version)();
+    bool (*deploy)(SoupServer *server);
     void (*undeploy)(SoupServer *server);
 };
+
+typedef struct _WebModule WebModule;
 
 
 #endif //WEB_MODULE_H_INCLUDED

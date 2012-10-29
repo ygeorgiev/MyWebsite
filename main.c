@@ -9,18 +9,76 @@
 
 #include <config.h>
 #include "utils.h"
-#include "web_handler.h"
+#include "web_module.h"
 
 GMainLoop *loop;
 SoupServer *soupServer;
-GHashTable *web_handlers;
+GHashTable *web_modules;
 GSList *monitors;
 
 
 
-void module_deploy(const GFile *module_path)
+void module_deploy(GFile *module_path)
 {
+    char *path = g_file_get_path(module_path);
+    DEBUG("Loading module at path %s...", path);
 
+    WebModule *newModule = malloc(sizeof(WebModule));
+    newModule->module = g_module_open(path, G_MODULE_BIND_MASK);
+    if(!newModule->module)
+    {
+        DEBUG("Error loading module: %s", g_module_error());
+        return;
+    }
+    DEBUG("Module loaded");
+
+    DEBUG("Checking interface version...");
+    if(!g_module_symbol(newModule->module, "get_interface_version", (gpointer*)(&newModule->get_interface_version)))
+    {
+        DEBUG("Error getting symbol 'get_interface_version': %s", g_module_error());
+        return;
+    }
+    if(newModule->get_interface_version() != WEB_MODULE_INTERFACE_VERSION)
+    {
+        DEBUG("Unsupported interface version. Supported: %i, found: %i", WEB_MODULE_INTERFACE_VERSION, newModule->get_interface_version());
+        return;
+    }
+    DEBUG("Module interface version: %i", newModule->get_interface_version());
+
+    DEBUG("Getting other symbols...");
+    if(!g_module_symbol(newModule->module, "get_name", (gpointer*)(&newModule->get_name)))
+    {
+        DEBUG("Error getting symbol 'get_name': %s", g_module_error());
+        return;
+    }
+    if(!g_module_symbol(newModule->module, "get_version", (gpointer*)(&newModule->get_version)))
+    {
+        DEBUG("Error getting symbol 'get_version': %s", g_module_error());
+        return;
+    }
+    if(!g_module_symbol(newModule->module, "deploy", (gpointer*)(&newModule->deploy)))
+    {
+        DEBUG("Error getting symbol 'deploy': %s", g_module_error());
+        return;
+    }
+    if(!g_module_symbol(newModule->module, "undeploy", (gpointer*)(&newModule->undeploy)))
+    {
+        DEBUG("Error getting symbol 'undeploy': %s", g_module_error());
+        return;
+    }
+    DEBUG("Symbols linked");
+
+    DEBUG("Module %s, version %i loaded, deploying...", newModule->get_name(), newModule->get_version());
+    if(newModule->deploy(soupServer))
+    {
+        DEBUG("Module deployed");
+    }
+    else
+    {
+        DEBUG("Error during module deployment");
+    }
+
+    g_free(path);
 }
 
 void module_undeploy(const GFile *module_path)
@@ -246,7 +304,7 @@ int main(int argc, char **argv)
     DEBUG("Signal handlers registered");
 
     DEBUG("Initializing storage...");
-    web_handlers = g_hash_table_new(g_str_hash, g_str_equal);
+    web_modules = g_hash_table_new(g_str_hash, g_str_equal);
     DEBUG("Storage initialized");
 
     DEBUG("Initializing SOUP Server...");

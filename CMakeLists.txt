@@ -22,7 +22,7 @@ set(INSTALLARC lib)
 
 # Continue with the building
 #This hack is because for some reason GTK2_LIBS does not include gio
-set(GIO_HACK "-lgio-2.0 -lgobject-2.0")
+set(GIO_HACK "-lgio-2.0 -lgobject-2.0 -lgmodule-2.0")
 
 include(FindGTK2)
 include(FindLibSoup2.cmake)
@@ -48,6 +48,9 @@ add_executable(mywebsite main.c)
 target_link_libraries(mywebsite ${GTK2_GLIB_LIBRARY} ${LIBSOUP2_LIBRARIES} ${GIO_HACK} mywebsite_utils)
 install(TARGETS mywebsite RUNTIME DESTINATION bin)
 
+
+# Modules
+add_subdirectory(modules)
 
 
 

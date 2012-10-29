@@ -58,25 +58,17 @@ static void test_callback(SoupServer *server,
 
 bool deploy(SoupServer *server)
 {   
-    DEBUG("Deploying helloworld web module...");
-
     soup_server_add_handler(server,
                             "/helloworld",
                             test_callback,
                             NULL,
                             NULL);
 
-    DEBUG("Helloworld web module deployed");
-
     return true;
 }
 
 void undeploy(SoupServer *server)
 {
-    DEBUG("Undeploying helloworld web module...");
-
     soup_server_remove_handler(server,
                               "/helloworld");
-
-    DEBUG("Helloworld web module undeployed");
 }

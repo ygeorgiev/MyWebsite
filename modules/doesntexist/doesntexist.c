@@ -53,25 +53,17 @@ static void doesntexist_callback(SoupServer *server,
 
 bool deploy(SoupServer *server)
 {   
-    DEBUG("Deploying doesntexist web module...");
-
     soup_server_add_handler(server,
                             NULL,
                             doesntexist_callback,
                             NULL,
                             NULL);
 
-    DEBUG("Doesntexist web module deployed");
-
     return true;
 }
 
 void undeploy(SoupServer *server)
 {
-    DEBUG("Undeploying doesntexist web module...");
-
     soup_server_remove_handler(server,
                               NULL);
-
-    DEBUG("Doesntexist web module undeployed");
 }

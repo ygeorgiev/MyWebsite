@@ -103,9 +103,36 @@ void module_undeploy(GFile *module_path)
     }
     DEBUG("Module closed");
 
+    DEBUG("Removing module from web_modules...");
+    if(!g_hash_table_remove(web_modules, path))
+    {
+        DEBUG("Was not found??");
+        return;
+    }
+    DEBUG("Module removed from web_modules");
+
     g_free(path);
 }
 
+void modules_undeploy(gpointer key,
+                      gpointer value,
+                      gpointer user_data)
+{
+    WebModule *module = (WebModule*)value;
+    if(module == NULL)
+        return;
+
+    DEBUG("Undeploying module %s (version %i)...", module->get_name(), module->get_version());
+    module->undeploy(soupServer);
+    DEBUG("Module undeployed");
+    DEBUG("Closing module...");
+    if(!g_module_close(module->module))
+    {
+        DEBUG("Error closing module: %s", g_module_error());
+        return;
+    }
+    DEBUG("Module closed");
+}
 
 void file_changed(GFileMonitor *monitor,
                     GFile *file,
@@ -354,7 +381,7 @@ int main(int argc, char **argv)
     g_slist_free_full(monitors, g_object_unref);
     DEBUG("File system watcher cleaned up");
     DEBUG("Undeploying all modules...");
-
+    g_hash_table_foreach(web_modules, modules_undeploy, NULL);
     DEBUG("All modules undeployed");
     DEBUG("Cleaning up SOUP Server...");
     soup_server_disconnect(soupServer);

@@ -1,7 +1,5 @@
-//This file gives the headers of all init-functions
-
-#ifndef WEB_H_INCLUDED
-#define WEB_H_INCLUDED
+#ifndef WEB_MODULE_H_INCLUDED
+#define WEB_MODULE_H_INCLUDED
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -15,7 +13,7 @@
 #include <config.h>
 
 
-struct WebHandler
+struct WebModule
 {
     GModule *module;
     void (*deploy)(SoupServer *server);
@@ -23,4 +21,4 @@ struct WebHandler
 };
 
 
-#endif //WEB_H_INCLUDED
+#endif //WEB_MODULE_H_INCLUDED

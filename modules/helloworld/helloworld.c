@@ -56,7 +56,7 @@ static void test_callback(SoupServer *server,
     DEBUG("test webpage returned");
 }
 
-void deploy(SoupServer *server)
+bool deploy(SoupServer *server)
 {   
     DEBUG("Deploying helloworld web module...");
 
@@ -67,6 +67,8 @@ void deploy(SoupServer *server)
                             NULL);
 
     DEBUG("Helloworld web module deployed");
+
+    return true;
 }
 
 void undeploy(SoupServer *server)

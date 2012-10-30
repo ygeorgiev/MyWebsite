@@ -64,6 +64,9 @@ bool install(WebServer *server)
                             NULL,
                             NULL);
 
+    void *test = server->get_system_service("testservice");
+    DEBUG("SERVICE RESULT: %s", test);
+
     return true;
 }
 

@@ -18,6 +18,9 @@
 struct _WebServer
 {
     SoupServer *soupServer;
+    bool (*add_service)(char *type, void *service_table);
+    void (*remove_service)(char *type);
+    void *(*get_system_service)(char *type);
 };
 typedef struct _WebServer WebServer;
 

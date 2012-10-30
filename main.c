@@ -14,9 +14,28 @@
 GMainLoop *loop;
 WebServer *thisServer;
 GHashTable *web_modules;
+GHashTable *system_services;
 GSList *monitors;
 
 
+
+bool service_add(char *type, void *service_table)
+{
+    DEBUG("service_add called with type: %s", type);
+    return false;
+}
+
+void service_remove(char *type)
+{
+    DEBUG("service_remove called with type: %s", type);
+    return;
+}
+
+void *service_get(char *type)
+{
+    DEBUG("service_get called with type: %s", type);
+    return "test123";
+}
 
 /**
  * Installs a module in the MyWebsite web server.
@@ -428,10 +447,17 @@ int main(int argc, char **argv)
 
     DEBUG("Initializing storage...", NULL);
     thisServer = malloc(sizeof(WebServer));
-    web_modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    web_modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free);
+    system_services = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     DEBUG("Storage initialized", NULL);
 
-    DEBUG("Initializing SOUP Server...", NULL);
+    DEBUG("Initializing WebServer...", NULL);;
+    thisServer->add_service = service_add;
+    thisServer->remove_service = service_remove;
+    thisServer->get_system_service = service_get;
+    DEBUG("WebServer initialized", NULL);
+
+    DEBUG("Initializing SoupServer...", NULL);
     thisServer->soupServer = soup_server_new(SOUP_SERVER_PORT, opt_port, NULL);
     if(thisServer->soupServer == NULL)
     {

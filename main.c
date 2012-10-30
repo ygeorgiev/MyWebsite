@@ -14,9 +14,9 @@
 GMainLoop *loop;
 WebServer *thisServer;
 GHashTable *web_modules;
-GHashTable *web_modules_failed;
+GList *web_modules_needing_dependencys = NULL;
 GHashTable *system_services;
-GSList *monitors;
+GSList *monitors = NULL;
 
 
 bool service_add(char *type, ServiceInfo *service_table)
@@ -60,7 +60,7 @@ ServiceInfo *service_get(const char *type)
  * In case of errors, it will log it (DEBUG) and just return
  * @param module_path A GFile pointer to the module library file
  */
-void module_install(GFile *module_path)
+InstallResult module_install(GFile *module_path, bool should_add_if_deps_not_ok)
 {
     char *path = g_file_get_path(module_path);
     DEBUG("Loading module at path %s...", path, NULL);
@@ -70,7 +70,7 @@ void module_install(GFile *module_path)
     if(!newModule->module)
     {
         DEBUG("Error loading module: %s", g_module_error(), NULL);
-        return;
+        return INSTALL_RESULT_COULD_NOT_LOAD;
     }
     DEBUG("Module loaded", NULL);
 
@@ -78,12 +78,12 @@ void module_install(GFile *module_path)
     if(!g_module_symbol(newModule->module, "get_interface_version", (gpointer*)(&newModule->get_interface_version)))
     {
         DEBUG("Error getting symbol 'get_interface_version': %s", g_module_error(), NULL);
-        return;
+        return INSTALL_RESULT_COULD_NOT_LOAD;
     }
     if(newModule->get_interface_version() != WEB_MODULE_INTERFACE_VERSION)
     {
         DEBUG("Unsupported interface version. Supported: %i, found: %i", WEB_MODULE_INTERFACE_VERSION, newModule->get_interface_version(), NULL);
-        return;
+        return INSTALL_RESULT_COULD_NOT_LOAD;
     }
     DEBUG("Module interface version: %i", newModule->get_interface_version(), NULL);
 
@@ -91,37 +91,79 @@ void module_install(GFile *module_path)
     if(!g_module_symbol(newModule->module, "get_name", (gpointer*)(&newModule->get_name)))
     {
         DEBUG("Error getting symbol 'get_name': %s", g_module_error(), NULL);
-        return;
+        return INSTALL_RESULT_COULD_NOT_LOAD;
     }
     if(!g_module_symbol(newModule->module, "get_version", (gpointer*)(&newModule->get_version)))
     {
         DEBUG("Error getting symbol 'get_version': %s", g_module_error(), NULL);
-        return;
+        return INSTALL_RESULT_COULD_NOT_LOAD;
     }
     if(!g_module_symbol(newModule->module, "install", (gpointer*)(&newModule->install)))
     {
         DEBUG("Error getting symbol 'install': %s", g_module_error(), NULL);
-        return;
+        return INSTALL_RESULT_COULD_NOT_LOAD;
     }
     if(!g_module_symbol(newModule->module, "uninstall", (gpointer*)(&newModule->uninstall)))
     {
         DEBUG("Error getting symbol 'uninstall': %s", g_module_error(), NULL);
-        return;
+        return INSTALL_RESULT_COULD_NOT_LOAD;
     }
     DEBUG("Symbols linked", NULL);
 
     DEBUG("Module %s, version %i loaded, installing...", newModule->get_name(), newModule->get_version(), NULL);
-    if(newModule->install(thisServer))
+    InstallResult result = newModule->install(thisServer);
+    if(result == INSTALL_RESULT_OK)
     {
         DEBUG("Module installed", NULL);
+
+        DEBUG("Trying to install all modules with unmet dependency's", NULL);
+        GList *loop_modules_in_need = web_modules_needing_dependencys;
+        while(loop_modules_in_need != NULL)
+        {
+            DEBUG("Test: %s", loop_modules_in_need->data);
+            InstallResult res = module_install(loop_modules_in_need->data, FALSE);
+            if(res != INSTALL_RESULT_DEPENDENCY_NOT_LOADED)
+            {
+                DEBUG("Removing module from to-load...", NULL);
+                //Another result then DEPENDENCY_NOT_LOADED means it's not in need anymore
+                GList *previous = loop_modules_in_need;
+                if(loop_modules_in_need->prev != NULL)
+                {
+                    loop_modules_in_need->prev->next = loop_modules_in_need->next;
+                }
+                if(loop_modules_in_need->next != NULL)
+                {
+                    loop_modules_in_need->next->prev = loop_modules_in_need->prev;
+                }
+                loop_modules_in_need->next = NULL;
+                loop_modules_in_need->prev = NULL;
+                g_list_free_1(loop_modules_in_need);
+                loop_modules_in_need = previous->next;
+                g_object_unref((GObject*)loop_modules_in_need->data);
+                DEBUG("Module removed from to-load", NULL);
+            }
+            else
+            {
+                loop_modules_in_need = loop_modules_in_need->next;
+            }
+        }
+        DEBUG("Tried to install all modules with unmet depdendency's", NULL);
+    }
+    else if(result == INSTALL_RESULT_DEPENDENCY_NOT_LOADED && should_add_if_deps_not_ok)
+    {
+        DEBUG("Module said it's dependency's were not loaded, will be retried after next module installation.", NULL);
+        g_object_ref((GObject*)module_path);
+        web_modules_needing_dependencys = g_list_prepend(web_modules_needing_dependencys, module_path);
+        return result;
     }
     else
     {
         DEBUG("Error during module installation", NULL);
-        return;
+        return result;
     }
 
     g_hash_table_insert(web_modules, path, newModule);
+    return result;
 }
 
 /**
@@ -161,7 +203,8 @@ void module_uninstall(GFile *module_path)
     DEBUG("Module removed from web_modules", NULL);
 
     DEBUG("Cleaning up WebModule struct...", NULL);
-    free(module);
+    if(module)
+        free(module);
     DEBUG("WebModule struct cleaned up", NULL);
 
     g_free(path);
@@ -254,7 +297,7 @@ bool adddir(GFile *file, GError **error)
     if(type != G_FILE_TYPE_DIRECTORY)
     {
         //Assume a module
-        module_install(file);
+        module_install(file, TRUE);
         return true;
     }
 
@@ -335,13 +378,13 @@ void file_changed(GFileMonitor *monitor,
     else if(event == 3)
     {
         //File created, install
-        module_install(file);
+        module_install(file, TRUE);
     }
     else if(event == 1)
     {
         //File changed, reinstall
         module_uninstall(file);
-        module_install(file);
+        module_install(file, TRUE);
     }
 
     g_free(msg);

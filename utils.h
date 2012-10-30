@@ -12,6 +12,7 @@
 #include <gio/gio.h>
 
 #define DEBUG(format, ...) if(get_debug()){g_log(G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, g_strdup_printf("(%s): %s", "%s@%s:%d", format), __FUNCTION__, __FILE__, __LINE__, __VA_ARGS__);} 
+#define TESTDEBUG DEBUG("TEST: %s, step %i", TESTDEBUG_TITLE, __COUNTER__, NULL)
 void set_debug(bool new_value);
 bool get_debug();
 

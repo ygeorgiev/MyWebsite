@@ -27,11 +27,21 @@ typedef struct _ServiceInfo ServiceInfo;
 struct _WebServer
 {
     SoupServer *soupServer;
+    bool (*is_module_loaded)(const char *module_name);
     bool (*add_service)(char *type, ServiceInfo *serviceInfo);
     void (*remove_service)(const char *type);
     ServiceInfo *(*get_system_service)(const char *type);
 };
 typedef struct _WebServer WebServer;
+
+enum _InstallResult
+{
+    INSTALL_RESULT_OK,
+    INSTALL_RESULT_DEPENDENCY_NOT_LOADED,
+    INSTALL_RESULT_FAILED,
+    INSTALL_RESULT_COULD_NOT_LOAD
+};
+typedef enum _InstallResult InstallResult;
 
 struct _WebModule
 {
@@ -39,7 +49,7 @@ struct _WebModule
     const int (*get_interface_version)();
     const char *(*get_name)();
     const int (*get_version)();
-    bool (*install)(WebServer *server);
+    InstallResult (*install)(WebServer *server);
     void (*uninstall)(WebServer *server);
 };
 typedef struct _WebModule WebModule;

@@ -56,7 +56,7 @@ static void test_callback(SoupServer *server,
     DEBUG("test webpage returned", NULL);
 }
 
-bool install(WebServer *server)
+InstallResult install(WebServer *server)
 {   
     soup_server_add_handler(server->soupServer,
                             "/helloworld",
@@ -67,7 +67,7 @@ bool install(WebServer *server)
     void *test = server->get_system_service("testservice");
     DEBUG("SERVICE RESULT: %s", test);
 
-    return true;
+    return INSTALL_RESULT_OK;
 }
 
 void uninstall(WebServer *server)

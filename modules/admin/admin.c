@@ -73,13 +73,13 @@ char *admin_auth_callback (SoupAuthDomain *domain,
 
 SoupAuthDomain *admin_domain = NULL;
 
-bool install(WebServer *server)
+InstallResult install(WebServer *server)
 {
     ServiceInfo *configInfo = server->get_system_service(SERVICE_TYPE_CONFIGURATION);
     if(configInfo == NULL)
     {
         DEBUG("Configuration system service is not provided, admin module cannot initialize", NULL);
-        return FALSE;
+        return INSTALL_RESULT_DEPENDENCY_NOT_LOADED;
     }
     config = (ServiceInfoConfiguration*)configInfo->get_service();
 
@@ -97,7 +97,7 @@ bool install(WebServer *server)
                             NULL,
                             NULL);
 
-    return true;
+    return INSTALL_RESULT_OK;
 }
 
 void uninstall(WebServer *server)

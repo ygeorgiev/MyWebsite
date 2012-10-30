@@ -14,9 +14,9 @@
 GMainLoop *loop;
 WebServer *thisServer;
 GHashTable *web_modules;
+GHashTable *web_modules_failed;
 GHashTable *system_services;
 GSList *monitors;
-
 
 
 bool service_add(char *type, ServiceInfo *service_table)
@@ -118,6 +118,7 @@ void module_install(GFile *module_path)
     else
     {
         DEBUG("Error during module installation", NULL);
+        return;
     }
 
     g_hash_table_insert(web_modules, path, newModule);

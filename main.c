@@ -117,7 +117,7 @@ void module_install(GFile *module_path)
     }
     else
     {
-        DEBUG("Error during module installment", NULL);
+        DEBUG("Error during module installation", NULL);
     }
 
     g_hash_table_insert(web_modules, path, newModule);

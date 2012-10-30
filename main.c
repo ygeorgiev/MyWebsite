@@ -19,22 +19,38 @@ GSList *monitors;
 
 
 
-bool service_add(char *type, void *service_table)
+bool service_add(char *type, ServiceInfo *service_table)
 {
-    DEBUG("service_add called with type: %s", type);
-    return false;
+    DEBUG("Adding service %s", type, NULL);
+
+    if(g_hash_table_contains(system_services, type))
+    {
+        DEBUG("Service was already installed", NULL);
+        return FALSE;
+    }
+    g_hash_table_insert(system_services, type, service_table);
+    DEBUG("Service succesfully installed", NULL);
+    return TRUE;
 }
 
-void service_remove(char *type)
+void service_remove(const char *type)
 {
-    DEBUG("service_remove called with type: %s", type);
-    return;
+    DEBUG("Removing service %s", type, NULL);
+
+    if(g_hash_table_remove(system_services, type))
+    {
+        DEBUG("Service %s removed", type, NULL);
+    }
+    else
+    {
+        DEBUG("Service %s was to be removed, but was not installed", type, NULL);
+    }
 }
 
-void *service_get(char *type)
+ServiceInfo *service_get(const char *type)
 {
-    DEBUG("service_get called with type: %s", type);
-    return "test123";
+    DEBUG("Getting service %s", type, NULL);
+    return g_hash_table_lookup(system_services, type);
 }
 
 /**

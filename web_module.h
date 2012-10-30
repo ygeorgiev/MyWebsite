@@ -15,12 +15,21 @@
 
 #define WEB_MODULE_INTERFACE_VERSION 1
 
+struct _ServiceInfo
+{
+    const char *(*get_name)();
+    const int (*get_version)();
+
+    void *(*get_service)();
+};
+typedef struct _ServiceInfo ServiceInfo;
+
 struct _WebServer
 {
     SoupServer *soupServer;
-    bool (*add_service)(char *type, void *service_table);
-    void (*remove_service)(char *type);
-    void *(*get_system_service)(char *type);
+    bool (*add_service)(char *type, ServiceInfo *serviceInfo);
+    void (*remove_service)(const char *type);
+    ServiceInfo *(*get_system_service)(const char *type);
 };
 typedef struct _WebServer WebServer;
 

@@ -473,8 +473,6 @@ void signal_int()
  */
 int main(int argc, char **argv)
 {
-    g_type_init();
-
     int opt_port = 8080;
     gchar *opt_rootdir = ".";
     gboolean opt_daemonize = FALSE;

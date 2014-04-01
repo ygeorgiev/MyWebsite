@@ -1,4 +1,5 @@
 language: c
+install: sudo apt-get install libsoup2.4 libsoup2.4-dev
 script: cmake . && make
 compiler:
     - clang
